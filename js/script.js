@@ -230,28 +230,57 @@ if (typeof firebase !== 'undefined') {
         const data = snapshot.val();
         
         let sheetsArray = null;
-        if (Array.isArray(data)) {
-            sheetsArray = data;
-        } else if (data && Array.isArray(data.sheetsData)) {
-            sheetsArray = data.sheetsData;
-        } else if (data && data.dashboardData && Array.isArray(data.dashboardData.sheetsData)) {
-            sheetsArray = data.dashboardData.sheetsData;
-        }
+        if (Array.isArray(data)) sheetsArray = data;
+        else if (data && Array.isArray(data.sheetsData)) sheetsArray = data.sheetsData;
+        else if (data && data.dashboardData && Array.isArray(data.dashboardData.sheetsData)) sheetsArray = data.dashboardData.sheetsData;
 
         if (sheetsArray && sheetsArray.length > 0) {
             currentFirebaseSheetData = sheetsArray;
             
-            // GLOBAL UI SYNC: Update all views seamlessly in the background
+            // 1. Direct Data Parsing
+            const parsedRecords = mapSheetClientRows(sheetsArray);
+            dashboardClientRecords = parsedRecords;
+            localStorage.setItem('dashboard_client_records', JSON.stringify(dashboardClientRecords));
             
-            // 1. Silently update all left panel lists (Clients, Status, Token tabs)
-            if (typeof refreshLeftClientList === 'function') {
-                refreshLeftClientList({ auto: true, silent: true });
-            }
+            // 2. Instant Left Panel Sync
+            if (typeof renderClientList === 'function') renderClientList(parsedRecords);
+            if (typeof renderStatusList === 'function') renderStatusList(parsedRecords);
+            if (typeof renderTokenList === 'function') renderTokenList(parsedRecords);
             
-            // 2. If a client is actively logged into the Dashboard, sync their specific data instantly
+            // 3. Instant Right Panel (Dashboard) Sync
             if (typeof currentClient !== 'undefined' && currentClient !== null && !isSigningOut) {
-                if (typeof syncClientData === 'function') {
-                    syncClientData();
+                const clientId = currentClient.client_id || currentClient.clientid || currentClient['Client ID'];
+                if (clientId) {
+                    const updatedRec = parsedRecords.find(r => 
+                        String(r['Client ID'] || '').toLowerCase() === String(clientId).toLowerCase()
+                    );
+                    
+                    if (updatedRec) {
+                        // Merge fresh sheet data into local active client state
+                        currentClient = {
+                            ...currentClient,
+                            ...updatedRec,
+                            name: updatedRec['Full Name'] || currentClient.name,
+                            email: updatedRec['Email ID'] || currentClient.email,
+                            phone: updatedRec['Phone Number'] || currentClient.phone,
+                            brand_name: updatedRec['Brand Name'] || currentClient.brand_name,
+                            status: updatedRec['Status'] || currentClient.status
+                        };
+                        
+                        if (updatedRec['Platforms Active']) {
+                            currentClient.platforms = updatedRec['Platforms Active'].split(',').map(s => String(s).trim()).filter(Boolean);
+                        }
+
+                        localStorage.setItem('current_client', JSON.stringify(currentClient));
+                        
+                        // Instantly update specific dashboard UI blocks
+                        if (window.location.hash === '#dashboard') {
+                            if (typeof updateDashboardData === 'function') updateDashboardData(currentClient);
+                            if (typeof updatePlatformStatus === 'function') updatePlatformStatus(currentClient);
+                            if (typeof updateAuthStatus === 'function') updateAuthStatus(currentClient);
+                            if (typeof renderManagePlatformChoices === 'function') renderManagePlatformChoices(true);
+                        }
+                    }
                 }
             }
         }
