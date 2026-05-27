@@ -1336,7 +1336,7 @@ function generatePlatformSettings() {
               <div class="form-group"><label>Tone</label><input type="text" id="reg_${p}_tone" placeholder="e.g. Friendly, expert, concise" required></div>
               <div class="form-group"><label>Format</label><input type="text" id="reg_${p}_format" placeholder="e.g. Reel, carousel, short post" required></div>
               <div class="form-group"><label>Emoji</label><input type="text" id="reg_${p}_emoji" placeholder="e.g. Minimal, brand-safe" required></div>
-              <div class="form-group"><label>Post Time</label><input type="text" id="reg_${p}_post_time" placeholder="e.g. 14:30" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
+              <div class="form-group"><label>Post Time</label><input type="text" id="reg_${p}_post_time" placeholder="e.g. 14:30" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
               <div class="form-group"><label>Timezone</label><input type="text" id="reg_${p}_timezone" value="Asia/Kolkata" required></div>
               <div class="form-group"><label>Language</label><input type="text" id="reg_${p}_language" placeholder="e.g. English" required></div>
               <div class="form-group"><label>Content Type</label><input type="text" id="reg_${p}_content_type" placeholder="e.g. Educational + promotional" required></div>
@@ -3571,7 +3571,7 @@ function handleUpgradePlatformSelection() {
               <div class="form-group"><label>Tone</label><input type="text" data-field="tone" placeholder="e.g. Friendly, expert, concise" required></div>
               <div class="form-group"><label>Format</label><input type="text" data-field="format" placeholder="e.g. Reel, carousel, short post" required></div>
               <div class="form-group"><label>Emoji</label><input type="text" data-field="emoji" placeholder="e.g. Minimal, brand-safe" required></div>
-              <div class="form-group"><label>Post Time</label><input type="text" data-field="post_time" placeholder="e.g. 14:30" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
+              <div class="form-group"><label>Post Time</label><input type="text" data-field="post_time" placeholder="e.g. 14:30" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
               <div class="form-group"><label>Timezone</label><input type="text" data-field="timezone" value="Asia/Kolkata" required></div>
               <div class="form-group"><label>Language</label><input type="text" data-field="language" placeholder="e.g. English" required></div>
               <div class="form-group"><label>Content Type</label><input type="text" data-field="content_type" placeholder="e.g. Educational + promotional" required></div>
