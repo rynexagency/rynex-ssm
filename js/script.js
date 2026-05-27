@@ -1967,12 +1967,7 @@ function fetchSheetViaJsonp() {
 }
 
 async function fetchClientRowsFromGoogleSheet() {
-    // If Firebase has populated data, use it instantly
-    if (currentFirebaseSheetData && currentFirebaseSheetData.length > 0) {
-        return mapSheetClientRows(currentFirebaseSheetData);
-    }
-    
-    // Otherwise, fallback to the direct Google Sheets JSONP call
+    // Strictly fetch fresh data directly from Google Sheets via JSONP
     if (!getClientSheetCsvUrl()) {
         throw new Error('Client data source is not configured.');
     }
