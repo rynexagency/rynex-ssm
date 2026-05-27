@@ -401,13 +401,36 @@ function showOutput(id, data, isError) {
 
     let displayText = data;
     if (typeof data === 'object') {
-        displayText = data.message || data.error || (isError ? 'An error occurred.' : 'Action completed successfully.');
+        displayText = data.message || data.error || (isError && isError !== 'loading' ? 'An error occurred.' : 'Action completed successfully.');
+    }
+
+    let icon = '';
+    if (isError === 'loading') {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+    } else if (isError) {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    } else {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
     }
 
     el.classList.add('show');
-    el.style.color = isError ? 'var(--danger)' : 'var(--success)';
-    el.textContent = displayText;
-    scheduleDashboardFeedbackFade(el);
+    
+    if (el.dataset.fadeTimer) {
+        clearTimeout(Number(el.dataset.fadeTimer));
+        delete el.dataset.fadeTimer;
+    }
+    el.style.opacity = '1';
+
+    const innerHTML = `<div style="display:flex; align-items:center; gap:6px;">${icon}<span>${displayText}</span></div>`;
+
+    if (isError === 'loading') {
+        el.style.color = 'var(--text-primary)';
+        el.innerHTML = innerHTML;
+    } else {
+        el.style.color = isError ? 'var(--danger)' : 'var(--success)';
+        el.innerHTML = innerHTML;
+        scheduleDashboardFeedbackFade(el);
+    }
 }
 
 function showRegisterModal(title, message, options = {}) {
@@ -1313,7 +1336,7 @@ function generatePlatformSettings() {
               <div class="form-group"><label>Tone</label><input type="text" id="reg_${p}_tone" placeholder="e.g. Friendly, expert, concise" required></div>
               <div class="form-group"><label>Format</label><input type="text" id="reg_${p}_format" placeholder="e.g. Reel, carousel, short post" required></div>
               <div class="form-group"><label>Emoji</label><input type="text" id="reg_${p}_emoji" placeholder="e.g. Minimal, brand-safe" required></div>
-              <div class="form-group"><label>Post Time</label><input type="text" id="reg_${p}_post_time" placeholder="e.g. 14:30" inputmode="text" required></div>
+              <div class="form-group"><label>Post Time</label><input type="text" id="reg_${p}_post_time" placeholder="e.g. 14:30" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
               <div class="form-group"><label>Timezone</label><input type="text" id="reg_${p}_timezone" value="Asia/Kolkata" required></div>
               <div class="form-group"><label>Language</label><input type="text" id="reg_${p}_language" placeholder="e.g. English" required></div>
               <div class="form-group"><label>Content Type</label><input type="text" id="reg_${p}_content_type" placeholder="e.g. Educational + promotional" required></div>
@@ -1325,6 +1348,12 @@ function generatePlatformSettings() {
 
     container.querySelectorAll('input, select, textarea').forEach(el => {
         el.addEventListener('input', saveDraftPlatformSettings);
+    });
+
+    // Attach 24-hour auto-formatter to Post Time fields in registration form
+    selected.forEach(p => {
+        const timeEl = document.getElementById(`reg_${p}_post_time`);
+        if (timeEl) attachTimeAutoFormat(timeEl);
     });
 
     const draftSettings = JSON.parse(localStorage.getItem('draftplatformsettings') || '{}');
@@ -2598,17 +2627,17 @@ function sendOauthLink(btn, p) {
         btn.disabled = b;
         btn.textContent = b ? 'Generating...' : originalText;
         if (b) {
-            showAuthLinkStatus(`Individual platform link is being generated for ${p}.`, 'loading', targetCard);
+            showAuthLinkStatus(`Generating secure authentication token for ${p}...`, 'loading', targetCard);
         }
     };
 
     const payload = generateOAuthPayload(currentClient, [p], 'single');
 
     callWebhook('send-oauth-link', payload, (data) => {
-        showAuthLinkStatus(`Authentication link generated successfully for ${p}.`, 'success', targetCard);
+        showAuthLinkStatus(`Secure authentication token provisioned for ${p}.`, 'success', targetCard);
         refreshClientDataAfterMutation();
     }, (err) => {
-        showAuthLinkStatus(`Failed to generate authentication link for ${p}.`, 'error', targetCard);
+        showAuthLinkStatus(`Failed to provision secure authentication token for ${p}.`, 'error', targetCard);
     }, setLoad);
 }
 
@@ -2977,6 +3006,16 @@ function updatePlatformStatus(newData) {
 }
 
 function showAuthLinkStatus(message, type, targetCard = null) {
+    let icon = '';
+    if (type === 'loading') {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="animation: spin 1s linear infinite;"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>`;
+    } else if (type === 'success') {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+    } else if (type === 'error') {
+        icon = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`;
+    }
+    const innerHTML = `<div style="display:flex; align-items:center; gap:6px;">${icon}<span>${message}</span></div>`;
+
     if (targetCard) {
         document.querySelectorAll('.auth-inline-status').forEach(el => {
             if (el.parentElement !== targetCard.parentElement || el.previousElementSibling !== targetCard) el.remove();
@@ -2993,7 +3032,7 @@ function showAuthLinkStatus(message, type, targetCard = null) {
         }
 
         if (inlineStatus.dataset.fadeTimer) clearTimeout(Number(inlineStatus.dataset.fadeTimer));
-        inlineStatus.textContent = message;
+        inlineStatus.innerHTML = innerHTML;
         inlineStatus.className = `auth-inline-status auth-inline-status-${type}`;
         requestAnimationFrame(() => inlineStatus.classList.add('show'));
 
@@ -3023,9 +3062,9 @@ function showAuthLinkStatus(message, type, targetCard = null) {
     banner.style.padding = '0';
     banner.style.margin = '-12px 0 36px';
     banner.style.opacity = '1';
-    title.textContent = message;
+    title.innerHTML = innerHTML;
     title.style.color = type === 'error' ? 'var(--danger)' : type === 'success' ? 'var(--success)' : 'var(--text-primary)';
-    timestamp.textContent = type === 'loading' ? 'Please wait...' : new Date().toLocaleString();
+    timestamp.textContent = '';
     if (copyBtn) copyBtn.style.display = 'none';
     if (output) {
         output.classList.remove('show');
@@ -3218,17 +3257,17 @@ function renderAuthGrid() {
                 'send-oauth-link',
                 payload,
                 () => {
-                    showAuthLinkStatus(`Authentication link generated successfully for ${plat}.`, 'success', card);
+                    showAuthLinkStatus(`Secure authentication token provisioned for ${plat}.`, 'success', card);
                     refreshClientDataAfterMutation();
                 },
                 () => {
-                    showAuthLinkStatus(`Failed to generate authentication link for ${plat}.`, 'error', card);
+                    showAuthLinkStatus(`Failed to provision secure authentication token for ${plat}.`, 'error', card);
                 },
                 (loading) => {
                     btn.disabled = loading;
                     btn.textContent = loading ? 'Generating...' : originalText;
                     if (loading) {
-                        showAuthLinkStatus(`Individual platform link is being generated for ${plat}.`, 'loading', card);
+                        showAuthLinkStatus(`Generating secure authentication token for ${plat}...`, 'loading', card);
                     }
                 }
             );
@@ -3272,7 +3311,7 @@ function updateAuthStatus(newData) {
 async function generateAllAuth() {
     const platforms = getClientPlatforms();
     if (!currentClient || platforms.length === 0) {
-        showAuthLinkStatus('No active platforms available for authentication link generation.', 'error');
+        showAuthLinkStatus('No active platforms available for token generation.', 'error');
         return;
     }
     
@@ -3283,7 +3322,7 @@ async function generateAllAuth() {
         btn.disabled = true;
         btn.textContent = 'Generating...';
     }
-    showAuthLinkStatus('Fetching fresh client data...', 'loading');
+    showAuthLinkStatus('Synchronizing overall client state...', 'loading');
     
     // Always fetch fresh registry row before generating links
     await syncClientDataManual();
@@ -3291,7 +3330,7 @@ async function generateAllAuth() {
     // Re-onboarding flow logic: allow if Offboarded, Pending Activation, Stalled
     const allowedStatuses = ['offboarded', 'pending activation', 'stalled'];
     if (!allowedStatuses.includes(normalizeString(currentClient.status))) {
-        showAuthLinkStatus(`Cannot generate links. Client status is ${currentClient.status}.`, 'error');
+        showAuthLinkStatus(`Cannot generate tokens. Client status is ${currentClient.status}.`, 'error');
         if (btn) {
             btn.disabled = false;
             btn.textContent = originalText;
@@ -3302,17 +3341,17 @@ async function generateAllAuth() {
     const payload = generateOAuthPayload(currentClient, platforms, 'all');
     
     callWebhook('send-oauth-link', payload, (data) => {
-        showAuthLinkStatus('Authentication links generated successfully for all platforms.', 'success');
+        showAuthLinkStatus('Secure authentication tokens successfully provisioned for active platforms.', 'success');
         refreshClientDataAfterMutation();
     }, (err) => {
-        showAuthLinkStatus('Failed to generate authentication links for all platforms.', 'error');
+        showAuthLinkStatus('Failed to provision secure authentication tokens.', 'error');
     }, (loading) => {
         if (btn) {
             btn.disabled = loading;
             btn.textContent = loading ? 'Generating...' : originalText;
         }
         if (loading) {
-            showAuthLinkStatus('Your authentication links are being generated for all platforms.', 'loading');
+            showAuthLinkStatus('Generating secure authentication tokens for active platforms...', 'loading');
         }
     });
 }
@@ -3321,24 +3360,24 @@ async function generateAuth(plat) {
     if (!currentClient) return;
     const targetCard = document.querySelector(`[data-token-card][data-platform="${plat}"]`);
 
-    showAuthLinkStatus(`Fetching fresh client data for ${plat}...`, 'loading', targetCard);
+    showAuthLinkStatus(`Synchronizing client state for ${plat}...`, 'loading', targetCard);
     await syncClientDataManual();
 
     const allowedStatuses = ['offboarded', 'pending activation', 'stalled'];
     if (!allowedStatuses.includes(normalizeString(currentClient.status))) {
-        showAuthLinkStatus(`Cannot generate link. Client status is ${currentClient.status}.`, 'error', targetCard);
+        showAuthLinkStatus(`Cannot generate token. Client status is ${currentClient.status}.`, 'error', targetCard);
         return;
     }
 
     const payload = generateOAuthPayload(currentClient, [plat], 'single');
     callWebhook('send-oauth-link', payload, (data) => {
-        showAuthLinkStatus(`Authentication link generated successfully for ${plat}.`, 'success', targetCard);
+        showAuthLinkStatus(`Secure authentication token provisioned for ${plat}.`, 'success', targetCard);
         refreshClientDataAfterMutation();
     }, (err) => {
-        showAuthLinkStatus(`Failed to generate authentication link for ${plat}.`, 'error', targetCard);
+        showAuthLinkStatus(`Failed to provision secure authentication token for ${plat}.`, 'error', targetCard);
     }, (loading) => {
         if (loading) {
-            showAuthLinkStatus(`Individual platform link is being generated for ${plat}.`, 'loading', targetCard);
+            showAuthLinkStatus(`Generating secure authentication token for ${plat}...`, 'loading', targetCard);
         }
     });
 }
@@ -3399,6 +3438,25 @@ if (oauthCallbackForm) {
                 });
             }
         }, (e) => showOutput('res-oauth-cb', e, true), setLoad);
+    });
+}
+
+// --- Utility: 24-hour HH:MM auto-formatter ---
+function attachTimeAutoFormat(input) {
+    if (!input || input.dataset.timeFormatAttached) return;
+    input.dataset.timeFormatAttached = '1';
+    input.addEventListener('input', function (e) {
+        if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') return;
+        let v = this.value.replace(/\D/g, '').substring(0, 4);
+        if (v.length >= 3) v = v.substring(0, 2) + ':' + v.substring(2);
+        this.value = v;
+    });
+    input.addEventListener('blur', function () {
+        const valid = /^([01]\d|2[0-3]):[0-5]\d$/.test(this.value);
+        this.style.borderColor = this.value && !valid ? 'var(--danger)' : '';
+    });
+    input.addEventListener('focus', function () {
+        this.style.borderColor = '';
     });
 }
 
@@ -3508,12 +3566,12 @@ function handleUpgradePlatformSelection() {
             <h4 style="margin-bottom:12px;">${pName}</h4>
             <div class="upg-settings-grid">
               <div class="form-group"><label>Name</label><input type="text" data-field="name" placeholder="e.g. ${pName} official page" required></div>
-              <div class="form-group"><label>Link</label><input type="text" data-field="link" placeholder="https://example.com/profile" required></div>
+              <div class="form-group"><label>Link</label><input type="url" data-field="link" placeholder="https://example.com/profile" required></div>
               <div class="form-group"><label>Niche</label><input type="text" data-field="niche" placeholder="e.g. Fitness coaching" required></div>
               <div class="form-group"><label>Tone</label><input type="text" data-field="tone" placeholder="e.g. Friendly, expert, concise" required></div>
               <div class="form-group"><label>Format</label><input type="text" data-field="format" placeholder="e.g. Reel, carousel, short post" required></div>
               <div class="form-group"><label>Emoji</label><input type="text" data-field="emoji" placeholder="e.g. Minimal, brand-safe" required></div>
-              <div class="form-group"><label>Post Time</label><input type="text" data-field="post_time" placeholder="e.g. 14:30" required></div>
+              <div class="form-group"><label>Post Time</label><input type="text" data-field="post_time" placeholder="e.g. 14:30" pattern="^([01]\d|2[0-3]):[0-5]\d$" title="Enter time in 24-hour format HH:MM (e.g. 14:30)" maxlength="5" inputmode="numeric" required></div>
               <div class="form-group"><label>Timezone</label><input type="text" data-field="timezone" value="Asia/Kolkata" required></div>
               <div class="form-group"><label>Language</label><input type="text" data-field="language" placeholder="e.g. English" required></div>
               <div class="form-group"><label>Content Type</label><input type="text" data-field="content_type" placeholder="e.g. Educational + promotional" required></div>
@@ -3522,6 +3580,11 @@ function handleUpgradePlatformSelection() {
           </div>
         `;
     }).join('');
+
+    // Attach 24-hour auto-formatter to newly rendered Post Time fields
+    document.querySelectorAll('#upg-platform-settings-list [data-field="post_time"]').forEach(el => {
+        attachTimeAutoFormat(el);
+    });
 }
 
 function applyLocalPlatformMutation(action, selectedPlatforms, perPlatformSettings = {}) {
@@ -3604,11 +3667,26 @@ document.getElementById('form-upgrade').addEventListener('submit', (e) => {
     };
     if (act === 'add') {
         const settingsBlocks = Array.from(document.querySelectorAll('[data-upg-settings]'));
+        let invalidMessage = null;
         const missing = settingsBlocks.some(block => {
-            return Array.from(block.querySelectorAll('input, textarea')).some(input => !input.value.trim());
+            return Array.from(block.querySelectorAll('input, textarea')).some(input => {
+                if (!input.value.trim()) {
+                    invalidMessage = 'Please complete all Platform Settings fields before adding platforms.';
+                    return true;
+                }
+                if (input.type === 'url' && !input.checkValidity()) {
+                    invalidMessage = `Please enter a valid URL (e.g. https://...) for the ${block.getAttribute('data-upg-settings')} Link.`;
+                    return true;
+                }
+                if (input.type === 'time' && !input.checkValidity()) {
+                    invalidMessage = `Please enter a valid time for the ${block.getAttribute('data-upg-settings')} Post Time.`;
+                    return true;
+                }
+                return false;
+            });
         });
         if (missing || settingsBlocks.length !== selectedPlatforms.length) {
-            showOutput('res-upgrade', 'Please complete all Platform Settings fields before adding platforms.', true);
+            showOutput('res-upgrade', invalidMessage || 'Please complete all Platform Settings fields before adding platforms.', true);
             return;
         }
         payload.per_platform = {};
@@ -3624,11 +3702,12 @@ document.getElementById('form-upgrade').addEventListener('submit', (e) => {
         });
     }
     const setLoad = (b) => document.getElementById('loading-upgrade').style.display = b ? 'flex' : 'none';
-    showOutput('res-upgrade', act === 'remove' ? 'Removing platform...' : 'Adding platform...', act === 'remove');
+    const platformNames = selectedPlatforms.join(', ');
+    showOutput('res-upgrade', act === 'remove' ? `Revoking integration for ${platformNames}...` : `Provisioning integration for ${platformNames}...`, 'loading');
     callWebhook('upgrade-client', payload, (d) => {
         const completedMessage = act === 'remove'
-            ? `${selectedPlatforms.length === 1 ? 'Platform' : 'Platforms'} removed successfully.`
-            : d;
+            ? `Successfully revoked integration for ${platformNames}.`
+            : `Successfully provisioned integration for ${platformNames}.`;
         showOutput('res-upgrade', completedMessage, false);
         if (currentClient) {
             applyLocalPlatformMutation(act, selectedPlatforms, payload.per_platform || {});
