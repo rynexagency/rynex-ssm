@@ -1,0 +1,510 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rynex OS</title>
+  <link rel="icon" type="image/png" href="assets/rynex-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+  <!-- Main Content -->
+  <main class="main-content" id="main-content">
+    
+    <header class="topbar" id="topbar">
+      <div class="topbar-primary">
+        <img src="assets/rynex-logo.png" alt="Rynex" class="topbar-logo">
+      </div>
+      <div class="topbar-secondary">
+        <span id="header-client-name" style="font-size:0.9rem; font-weight:500;">No Client Active</span>
+        <div id="header-client-initials" style="width:32px; height:32px; border-radius:50%; background:var(--text-primary); color:var(--bg-primary); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:0.8rem;">--</div>
+      </div>
+    </header>
+
+    <!-- VIEWS -->
+
+    <!-- Login / Identity -->
+    <div id="view-login" class="view" style="position:fixed; inset:0; z-index:100; background:var(--bg-primary);">
+      <div class="split-layout">
+        <div class="split-left" style="align-items: center; justify-content: center;">
+          <div style="width: 100%; max-width: 500px; position: relative;">
+            <div style="position:absolute; right:0; top:-42px; display:flex; align-items:center; justify-content:flex-end; gap:12px;">
+              <span id="left-client-refresh-status" style="font-size:0.78rem; color:#777;">Ready</span>
+              <button type="button" id="left-client-refresh-btn" style="background: transparent; border: 1px solid rgba(255,255,255,0.16); color: #ddd; padding: 7px 12px; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer;">Refresh</button>
+            </div>
+          <div style="width: 100%; display: flex; flex-direction: column; gap: 14px;">
+            <!-- Tabs Header -->
+            <div style="padding: 10px; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: #050505; z-index: 10;">
+              <div style="display:flex; background: #111; border-radius: 8px; padding: 4px;">
+                <div id="left-tab-clients" onclick="setLeftTab('clients')" style="flex:1; text-align:center; padding: 8px; border-radius: 6px; cursor:pointer; font-size: 1rem; font-weight: 600; background: #1a1a1a; color: #fff; border: 1px solid rgba(255,255,255,0.05); transition:all 0.2s;">Clients</div>
+                <div id="left-tab-status" onclick="setLeftTab('status')" style="flex:1; text-align:center; padding: 8px; border-radius: 6px; cursor:pointer; font-size: 1rem; font-weight: 600; color: #888; background: transparent; border: 1px solid transparent; transition:all 0.2s;">Status</div>
+                <div id="left-tab-token" onclick="setLeftTab('token')" style="flex:1; text-align:center; padding: 8px; border-radius: 6px; cursor:pointer; font-size: 1rem; font-weight: 600; color: #888; background: transparent; border: 1px solid transparent; transition:all 0.2s;">Token</div>
+              </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="left-data-scroll" style="height: 325px; overflow-y: auto; padding: 0; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: #050505;">
+              <!-- Clients Tab -->
+              <div id="left-content-clients" style="display: block;">
+                <div id="client-list-empty" style="padding: 20px; color: #999; font-size: 0.9rem;">Fetching clients...</div>
+              </div>
+              
+              <!-- Status Tab -->
+              <div id="left-content-status" style="display: none;">
+                <div id="status-list-empty" style="padding: 20px; color: #999; font-size: 0.9rem;">Fetching status data...</div>
+              </div>
+              
+              <!-- Token Tab -->
+              <div id="left-content-token" style="display: none;">
+                <!-- Pending 1 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <div style="font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 2px;">LunarGrid Co.</div>
+                    <div style="font-size: 0.9rem; color: #999; margin-bottom: 6px;">9334455667</div>
+                    <div style="font-size: 0.85rem; color: #bbb;"><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 4px; color: #ddd; font-size: 0.75rem; font-weight: 600;">YT</span><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 8px; color: #ddd; font-size: 0.75rem; font-weight: 600;">IG</span> 6d remaining</div>
+                  </div>
+                </div>
+                <!-- Pending 2 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <div>
+                    <div style="font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 2px;">PixelForge</div>
+                    <div style="font-size: 0.9rem; color: #999; margin-bottom: 6px;">9556677889</div>
+                    <div style="font-size: 0.85rem; color: #bbb;"><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 4px; color: #ddd; font-size: 0.75rem; font-weight: 600;">FB</span><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 4px; color: #ddd; font-size: 0.75rem; font-weight: 600;">LI</span><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 8px; color: #ddd; font-size: 0.75rem; font-weight: 600;">YT</span> 5d remaining</div>
+                  </div>
+                </div>
+                <!-- Pending 3 -->
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid transparent;">
+                  <div>
+                    <div style="font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 2px;">TidalWave Media</div>
+                    <div style="font-size: 0.9rem; color: #999; margin-bottom: 6px;">9778899001</div>
+                    <div style="font-size: 0.85rem; color: #bbb;"><span style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 2px 6px; border-radius: 4px; margin-right: 8px; color: #ddd; font-size: 0.75rem; font-weight: 600;">IG</span> 7d remaining</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+        <div class="split-right">
+          <div class="login-card">
+            <img src="assets/rynex-logo.png" alt="Rynex" style="height: 56px; object-fit: contain; margin-bottom: 8px; display: block;">
+            <h2 style="margin-bottom:8px;">Identity Verification</h2>
+            <p style="margin-bottom:24px; font-size:0.9rem;">Select your preferred authentication method.</p>
+                       <div style="display:flex; gap:8px; margin-bottom:24px; padding:4px; background:var(--bg-tertiary); border-radius:var(--radius-md);">
+              <div id="tab-details" onclick="setLoginMethod('details')" style="flex:1; text-align:center; padding:8px; border-radius:4px; cursor:pointer; font-size:0.9rem; font-weight:500; background:var(--bg-secondary); color:var(--text-primary); box-shadow:var(--shadow-sm); transition:all 0.2s;">Client Details</div>
+              <div id="tab-id" onclick="setLoginMethod('id')" style="flex:1; text-align:center; padding:8px; border-radius:4px; cursor:pointer; font-size:0.9rem; font-weight:500; color:var(--text-secondary); background:transparent; box-shadow:none; transition:all 0.2s;">Client ID</div>
+            </div>
+
+            <form id="form-identify" style="position:relative;">
+              <div class="loading-overlay" id="loading-identify"></div>
+
+              <div id="method-details">
+                <div class="form-group">
+                  <label>Email *</label>
+                  <input type="email" id="id_email" placeholder="e.g. client@example.com" required>
+                </div>
+                <div class="form-group">
+                  <label>Phone *</label>
+                  <input type="tel" id="id_phone" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+                </div>
+              </div>
+
+              <div id="method-id" style="display:none;">
+                <div class="form-group">
+                  <label>Client ID *</label>
+                  <input type="text" id="id_client_id" placeholder="e.g. CL-0001">
+                </div>
+              </div>
+              <div style="display:flex; gap:12px; margin-top:32px;">
+                <button type="submit" class="btn btn-primary" style="flex:1;">Continue</button>
+                <button type="button" class="btn btn-secondary" onclick="forceRegister()" style="flex:1;">New Client</button>
+              </div>
+              <div class="api-response" id="res-identify"></div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Registration / Onboarding -->
+    <div id="view-register" class="view">
+      <div class="view-container" style="max-width: 800px;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:20px;">
+          <div>
+            <h2 style="margin-bottom: 8px;">Client Onboarding</h2>
+            <p>Complete the setup to provision the workspace.</p>
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="goToLoginFromRegister(false)">Home</button>
+        </div>
+        
+        <div class="stepper">
+          <div class="step-indicator active" id="step-ind-1"></div>
+          <div class="step-indicator" id="step-ind-2"></div>
+          <div class="step-indicator" id="step-ind-3"></div>
+        </div>
+
+        <form id="form-register" style="position:relative;">
+          <div class="loading-overlay" id="loading-register" style="background: rgba(10, 10, 10, 0.7); backdrop-filter: blur(4px);">
+            <div class="spinner"></div>
+            <div id="reg-status-text" style="font-weight:500; text-align: center;"></div>
+          </div>
+
+          <div id="duplicate-warning" style="display:none; background: rgba(229, 72, 77, 0.1); border: 1px solid rgba(229, 72, 77, 0.5); padding: 16px; border-radius: var(--radius-md); margin-bottom: 24px; align-items: center; gap: 16px;">
+            <div style="background: rgba(229, 72, 77, 0.2); border-radius: 50%; padding: 8px; display: flex; align-items: center; justify-content: center;">
+              <img src="assets/icon-warning.svg" width="24" height="24" alt="Duplicate Record">
+            </div>
+            <div>
+              <strong style="color: var(--danger); display: block; margin-bottom: 4px; font-size: 1.1rem;">Duplicate Record Found</strong>
+              <span style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.4; display: block;">An account with these details already exists in the system. Please return to the login screen and use the 'Client Details' method to authenticate.</span>
+            </div>
+          </div>
+
+          <!-- Step 1: Identity & Branding -->
+          <div id="reg-step-1" class="card">
+            <h3 style="margin-bottom:16px;">Identity & Branding</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px;">
+            <div class="form-group">
+              <label>Full Name *</label>
+              <input type="text" id="reg_name" placeholder="e.g. John Doe" required>
+            </div>
+            <div class="form-group">
+              <label>Email *</label>
+              <input type="email" id="reg_email" placeholder="e.g. client@example.com" required>
+            </div>
+            <div class="form-group">
+              <label>Phone *</label>
+              <input type="tel" id="reg_phone" placeholder="e.g. 9876543210" maxlength="10" pattern="[0-9]{10}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" required>
+            </div>
+            <div class="form-group">
+              <label>Brand Name *</label>
+              <input type="text" id="reg_brand" placeholder="e.g. MyBrand Inc" required>
+            </div>
+            </div>
+            <div style="display:flex; justify-content:flex-end; margin-top:32px;">
+              <button type="button" class="btn btn-primary" onclick="validateStep1()">Next</button>
+            </div>
+          </div>
+
+          <!-- Step 2: Platform Selection -->
+          <div id="reg-step-2" class="card" style="display:none;">
+            <h3 style="margin-bottom:24px;">Select Platforms</h3>
+            <div class="platform-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="card platform-card selectable" onclick="this.classList.toggle('active'); saveDraftPlatforms(); saveDraftPlatformSettings()" data-plat="YT">
+                <div class="platform-header" style="justify-content: center;">
+                  <span class="platform-icon">YouTube</span>
+                </div>
+              </div>
+              <div class="card platform-card selectable" onclick="this.classList.toggle('active'); saveDraftPlatforms(); saveDraftPlatformSettings()" data-plat="IG">
+                <div class="platform-header" style="justify-content: center;">
+                  <span class="platform-icon">Instagram</span>
+                </div>
+              </div>
+              <div class="card platform-card selectable" onclick="this.classList.toggle('active'); saveDraftPlatforms(); saveDraftPlatformSettings()" data-plat="FB">
+                <div class="platform-header" style="justify-content: center;">
+                  <span class="platform-icon">Facebook</span>
+                </div>
+              </div>
+              <div class="card platform-card selectable" onclick="this.classList.toggle('active'); saveDraftPlatforms(); saveDraftPlatformSettings()" data-plat="LI">
+                <div class="platform-header" style="justify-content: center;">
+                  <span class="platform-icon">LinkedIn</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:32px;">
+              <button type="button" class="btn btn-secondary" onclick="nextStep(1)">Back</button>
+              <button type="button" class="btn btn-primary" onclick="generatePlatformSettings()">Next</button>
+            </div>
+          </div>
+          <div id="platform-error-msg" class="api-response platform-error-popover">
+            Please select at least one platform
+          </div>
+
+          <!-- Step 3: Platform Settings -->
+          <div id="reg-step-3" style="display:none;">
+
+            <div id="platform-settings-container"></div>
+            
+            <div style="display:flex; justify-content:space-between; margin-top:32px;">
+              <button type="button" class="btn btn-secondary" onclick="nextStep(2)">Back</button>
+              <button type="submit" class="btn btn-primary">Create</button>
+            </div>
+            <div class="api-response" id="res-register"></div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="view-dashboard" class="view">
+      <div class="view-container">
+        <div class="dashboard-split">
+          <section class="dashboard-primary">
+        
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <span class="stat-label">Client ID</span>
+            <span class="stat-value" id="dash-client-id-stat" style="font-family: monospace; font-size: 1rem; letter-spacing: 0.05em; font-weight: 600; line-height: 1.3; word-break: break-word; white-space: normal;">â€”</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-label">Brand</span>
+            <span class="stat-value" id="dash-brand-stat" style="font-size: 0.95rem; font-weight: 600; line-height: 1.3; word-break: break-word; white-space: normal;">â€”</span>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-label">Client Status</span>
+            <div class="stat-value" id="dash-client-status-wrapper" style="font-size: 0.95rem; font-weight: 600; line-height: 1.3; word-break: break-word; white-space: normal;">â€”</div>
+          </div>
+          <div class="card stat-card">
+            <span class="stat-label" id="dash-status-date-label">Onboarding Date</span>
+            <span class="stat-value" id="dash-status-date-stat" style="font-size: 0.95rem; font-weight: 600; line-height: 1.3; word-break: break-word; white-space: normal;">â€”</span>
+          </div>
+        </div>
+
+        <!-- Client Profile Card -->
+        <div class="card" id="dash-client-profile" style="margin-bottom: 0;">
+          <h3 style="margin-top:0; margin-bottom:14px;">Client Profile</h3>
+          
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px;">
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Full Name</div>
+              <div id="dash-full-name" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Email ID</div>
+              <div id="dash-email" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Phone Number</div>
+              <div id="dash-phone" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 14px;">
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Platforms</div>
+              <div id="dash-platform-tags" style="display:flex; flex-wrap:wrap; gap:6px; margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Current Cycle</div>
+              <div id="dash-current-cycle" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div id="dash-profile-status-date-label" style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Onboarding Date</div>
+              <div id="dash-profile-status-date" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+          </div>
+
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 16px;">
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Root Folder</div>
+              <div id="dash-root-folder" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Duplicate Flag</div>
+              <div id="dash-duplicate-flag" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-secondary);">Last Updated</div>
+              <div id="dash-last-updated" style="font-size:0.95rem; font-weight:500; color:var(--text-primary); margin-top:4px;">â€”</div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap: 16px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+            <button type="button" class="btn btn-outline-danger" onclick="signOut()">Sign Out</button>
+            <div style="display:flex; justify-content:flex-end; gap: 16px;">
+              <button class="btn btn-secondary" style="border: 1px solid var(--warning); color: var(--warning);" onclick="document.getElementById('modal-title').textContent = 'Confirm Re-onboard'; document.getElementById('modal-desc').textContent = 'Are you sure you want to re-onboard ' + (currentClient.brandname || currentClient.brand_name || 'this client') + '? This will reset all tokens and restart the onboarding sequence.'; document.getElementById('modal-confirm').className = 'btn btn-primary'; showModal('reonboard');">Re-onboard</button>
+              <button class="btn btn-danger" onclick="document.getElementById('modal-title').textContent = 'Confirm Offboard'; document.getElementById('modal-desc').textContent = 'Are you sure you want to offboard ' + (currentClient.brandname || currentClient.brand_name || 'this client') + '?'; document.getElementById('modal-confirm').className = 'btn btn-danger'; showModal('offboard');">Offboard</button>
+            </div>
+          </div>
+        </div>
+
+          </section>
+          <aside class="dashboard-secondary">
+        <div class="token-health-header">
+          <h3 style="margin:0;">Active Platforms</h3>
+        </div>
+
+        <div id="active-platform-grid" class="token-accordion-list"></div>
+
+        <div class="token-health-header">
+          <h3 style="margin:0;">Platform Authentication</h3>
+          <button class="btn btn-primary" onclick="generateAllAuth()">Generate All Links</button>
+        </div>
+
+        <div id="auth-platform-grid" class="token-accordion-list"></div>
+
+        <div class="card" style="margin-bottom:32px; display:none;" id="auth-success-banner">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <h4 id="auth-status-title" style="color:var(--success); margin-bottom:4px;">Links Generated Successfully</h4>
+              <p id="auth-timestamp" style="font-size:0.85rem;"></p>
+            </div>
+            <button class="btn btn-secondary" id="auth-copy-link-btn" onclick="showToast('Link Copied!', 'info')" style="display:none;">Copy Link</button>
+          </div>
+          <div class="api-response" id="res-auth-all"></div>
+        </div>
+
+        <div class="platform-grid" id="auth-legacy-grid" style="display:none;">
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon">âŒ˜</div>
+            <h4 style="margin-bottom:8px;">No pending authentications</h4>
+            <p>All connected platforms are fully authenticated.</p>
+          </div>
+        </div>
+
+        <div class="manage-platform-section" style="margin-bottom:32px;">
+          <h3 style="margin-bottom: 16px;">Manage Platform</h3>
+          <form id="form-upgrade" style="position:relative;">
+             <div class="loading-overlay" id="loading-upgrade"></div>
+             <div class="form-group">
+               <label>Action</label>
+               <input type="hidden" id="upg_action" value="add">
+               <div class="segment-toggle" role="group" aria-label="Platform action">
+                 <button type="button" class="segment-option active" id="upg-action-add" onclick="setUpgradeAction('add')">Add Platform</button>
+                 <button type="button" class="segment-option" id="upg-action-remove" onclick="setUpgradeAction('remove')">Remove Platform</button>
+               </div>
+             </div>
+             <div class="form-group">
+               <label>Platforms</label>
+               <div class="platform-grid manage-platform-grid" id="upg-platform-choices">
+                 <div class="card platform-card selectable manage-platform-card" onclick="toggleUpgradePlatform(this)" data-plat="YT">
+                   <input type="checkbox" value="YT" hidden>
+                   <div class="platform-header" style="justify-content: center;">
+                     <span class="platform-icon">YouTube</span>
+                   </div>
+                 </div>
+                 <div class="card platform-card selectable manage-platform-card" onclick="toggleUpgradePlatform(this)" data-plat="IG">
+                   <input type="checkbox" value="IG" hidden>
+                   <div class="platform-header" style="justify-content: center;">
+                     <span class="platform-icon">Instagram</span>
+                   </div>
+                 </div>
+                 <div class="card platform-card selectable manage-platform-card" onclick="toggleUpgradePlatform(this)" data-plat="FB">
+                   <input type="checkbox" value="FB" hidden>
+                   <div class="platform-header" style="justify-content: center;">
+                     <span class="platform-icon">Facebook</span>
+                   </div>
+                 </div>
+                 <div class="card platform-card selectable manage-platform-card" onclick="toggleUpgradePlatform(this)" data-plat="LI">
+                   <input type="checkbox" value="LI" hidden>
+                   <div class="platform-header" style="justify-content: center;">
+                     <span class="platform-icon">LinkedIn</span>
+                   </div>
+                 </div>
+               </div>
+             </div>
+             
+             <div id="upg-settings-block" class="upg-settings-block">
+               <div id="upg-platform-settings-list"></div>
+             </div>
+
+             <button type="submit" class="btn btn-primary" id="upg-submit-btn">Add Platform</button>
+             <div class="api-response" id="res-upgrade"></div>
+          </form>
+        </div>
+          </aside>
+
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Auth Center -->
+    <div id="view-auth" class="view">
+      <div class="view-container">
+      </div>
+    </div>
+
+
+
+    <!-- Lifecycle -->
+    <div id="view-lifecycle" class="view">
+      <div class="view-container" style="max-width:800px;">
+        <h2 style="margin-bottom: 24px;">Lifecycle Management</h2>
+        
+        <div class="card" style="margin-bottom:24px;">
+          <h3 style="margin-bottom:8px;">Re-onboard Client</h3>
+          <p style="margin-bottom:16px;">Reset all tokens and re-trigger onboarding sequence.</p>
+          <button class="btn btn-secondary" style="color:var(--warning); border-color:var(--warning);" onclick="showModal('reonboard')">Initiate Re-onboard</button>
+          <div class="api-response" id="res-reonboard"></div>
+        </div>
+
+        <div class="card" style="border-color:var(--danger);">
+          <h3 style="margin-bottom:8px; color:var(--danger);">Offboard Client</h3>
+          <p style="margin-bottom:16px;">Permanently delete client and revoke all access.</p>
+          <button class="btn btn-danger" onclick="showModal('offboard')">Permanently Offboard</button>
+          <div class="api-response" id="res-offboard"></div>
+        </div>
+
+        <h3 style="margin-top:40px; margin-bottom:20px;">Activity Logs</h3>
+        <div class="card" style="padding:0; overflow:hidden;">
+          <table class="data-table">
+            <thead>
+              <tr><th>Date</th><th>Action</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Today</td><td>Session Start</td><td><span class="badge badge-green">Success</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modals -->
+  <div class="modal-backdrop" id="action-modal">
+    <div class="modal-card">
+      <h2 id="modal-title" style="margin-bottom:12px;">Confirm Action</h2>
+      <p id="modal-desc" style="margin-bottom:32px;">Are you sure?</p>
+      <div style="display:flex; justify-content:flex-end; gap:12px;">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" id="modal-confirm">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  
+  <!-- Account Created Success Popup -->
+  <div class="modal-backdrop" id="success-modal" style="z-index: 2000;">
+    <div class="modal-card" style="text-align:center; max-width: 420px; padding: 40px 32px;">
+      <div style="width:64px; height:64px; border-radius:50%; background: rgba(48, 164, 108, 0.15); border: 2px solid #30A46C; display:flex; align-items:center; justify-content:center; margin: 0 auto 24px;">
+        <img src="assets/icon-check-circle.svg" width="32" height="32" alt="Success">
+      </div>
+      <h2 style="margin-bottom:8px; font-size:1.4rem;">Account Created!</h2>
+      <div style="background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px 16px; display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:24px;">
+        <div style="text-align:center;">
+          <div style="font-size:0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom:4px;">Client ID</div>
+          <div id="popup-client-id" style="font-family: monospace; font-size: 1rem; color: var(--text-primary); font-weight:600; word-break:break-all;">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+
+  <script>
+    function setLeftTab(tab) {
+      document.getElementById('left-content-clients').style.display = 'none';
+      document.getElementById('left-content-status').style.display = 'none';
+      document.getElementById('left-content-token').style.display = 'none';
+      ['clients','status','token'].forEach(t => {
+        const el = document.getElementById('left-tab-' + t);
+        el.style.background = 'transparent';
+        el.style.color = '#888';
+        el.style.border = '1px solid transparent';
+      });
+      document.getElementById('left-content-' + tab).style.display = 'block';
+      const active = document.getElementById('left-tab-' + tab);
+      active.style.background = '#1a1a1a';
+      active.style.color = '#fff';
+      active.style.border = '1px solid rgba(255,255,255,0.05)';
+    }
+  </script>
+</body>
+</html>
+
